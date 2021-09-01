@@ -102,13 +102,13 @@ def process_video(args):
                 tube_bbox = trajectory[0]
                 intersection = 0
                 for bbox in bboxes:
-                    intersection = max(intersection, bb_intersection_over_union(tube_bbox, bbox))
+                    intersection = max(intersection, bb_intersection_over_union(tube_bbox, bbox)) #staartframe bbox, now frame bbox
                 if intersection > args.iou_with_initial:
                     valid_trajectories.append(trajectory)
                 else:
                     not_valid_trajectories.append(trajectory)
-
-            commands += compute_bbox_trajectories(not_valid_trajectories, fps, frame_shape, args)
+            print("frame",i,"not trajectories",not_valid_trajectories)
+            commands += compute_bbox_trajectories(not_valid_trajectories, fps, frame_shape, args)# return none
             trajectories = valid_trajectories
 
             ## Assign bbox to trajectories, create new trajectories
@@ -124,11 +124,11 @@ def process_video(args):
 
                 ## Create new trajectory
                 if current_trajectory is None:
-                    trajectories.append([bbox, bbox, i, i])
+                    trajectories.append([bbox, bbox, i, i]) #bbox ,tube_bbox,start,end   : tube_bbox is max bbox
                 else:
                     current_trajectory[3] = i
                     current_trajectory[1] = join(current_trajectory[1], bbox)
-
+            print("frame",i,"trajecties",trajectories)
 
     except IndexError as e:
         raise (e)

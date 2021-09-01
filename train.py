@@ -1,4 +1,5 @@
 from tqdm import trange
+from tqdm import tqdm
 import torch
 
 from torch.utils.data import DataLoader
@@ -36,7 +37,7 @@ def train(config, generator, discriminator, kp_detector, checkpoint, log_dir, da
 
     if 'num_repeats' in train_params or train_params['num_repeats'] != 1:
         dataset = DatasetRepeater(dataset, train_params['num_repeats'])
-    dataloader = DataLoader(dataset, batch_size=train_params['batch_size'], shuffle=True, num_workers=6, drop_last=True)
+    dataloader = DataLoader(dataset, batch_size=train_params['batch_size'], shuffle=True, num_workers=4, drop_last=True,pin_memory=True)
 
     generator_full = GeneratorFullModel(kp_detector, generator, discriminator, train_params)
     discriminator_full = DiscriminatorFullModel(kp_detector, generator, discriminator, train_params)
@@ -46,10 +47,14 @@ def train(config, generator, discriminator, kp_detector, checkpoint, log_dir, da
         discriminator_full = DataParallelWithCallback(discriminator_full, device_ids=device_ids)
 
     with Logger(log_dir=log_dir, visualizer_params=config['visualizer_params'], checkpoint_freq=train_params['checkpoint_freq']) as logger:
-        for epoch in trange(start_epoch, train_params['num_epochs']):
-            for x in dataloader:
+        for epoch in range(start_epoch,train_params['num_epochs']):
+            prog_bar=tqdm(dataloader)
+            iter_num=len(dataloader)
+            print("epoch",epoch)
+            for step, x in enumerate(prog_bar):
+                now_step=(epoch*iter_num)+(step+1)
                 losses_generator, generated = generator_full(x)
-
+                
                 loss_values = [val.mean() for val in losses_generator.values()]
                 loss = sum(loss_values)
 

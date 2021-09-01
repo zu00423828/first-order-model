@@ -5,7 +5,7 @@ matplotlib.use('Agg')
 import os, sys
 import yaml
 from argparse import ArgumentParser
-from time import gmtime, strftime
+from time import gmtime, strftime,localtime
 from shutil import copy
 
 from frames_dataset import FramesDataset
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         log_dir = os.path.join(*os.path.split(opt.checkpoint)[:-1])
     else:
         log_dir = os.path.join(opt.log_dir, os.path.basename(opt.config).split('.')[0])
-        log_dir += ' ' + strftime("%d_%m_%y_%H.%M.%S", gmtime())
+        log_dir += ' ' + strftime("%d_%m_%y_%H.%M.%S", localtime())
 
     generator = OcclusionAwareGenerator(**config['model_params']['generator_params'],
                                         **config['model_params']['common_params'])

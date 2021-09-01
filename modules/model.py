@@ -177,7 +177,7 @@ class GeneratorFullModel(torch.nn.Module):
             value_total = 0
             for scale in self.disc_scales:
                 key = 'prediction_map_%s' % scale
-                value = ((1 - discriminator_maps_generated[key]) ** 2).mean()
+                value = ((1 - discriminator_maps_generated[key]) ** 2).mean() #最小2乘gan算法
                 value_total += self.loss_weights['generator_gan'] * value
             loss_values['gen_gan'] = value_total
 
@@ -188,7 +188,7 @@ class GeneratorFullModel(torch.nn.Module):
                     for i, (a, b) in enumerate(zip(discriminator_maps_real[key], discriminator_maps_generated[key])):
                         if self.loss_weights['feature_matching'][i] == 0:
                             continue
-                        value = torch.abs(a - b).mean()
+                        value = torch.abs(a - b).mean()#l1 loss
                         value_total += self.loss_weights['feature_matching'][i] * value
                     loss_values['feature_matching'] = value_total
 
@@ -252,7 +252,7 @@ class DiscriminatorFullModel(torch.nn.Module):
         value_total = 0
         for scale in self.scales:
             key = 'prediction_map_%s' % scale
-            value = (1 - discriminator_maps_real[key]) ** 2 + discriminator_maps_generated[key] ** 2
+            value = (1 - discriminator_maps_real[key]) ** 2 + discriminator_maps_generated[key] ** 2 #最小2乘gan
             value_total += self.loss_weights['discriminator_gan'] * value.mean()
         loss_values['disc_gan'] = value_total
 

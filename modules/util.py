@@ -10,22 +10,22 @@ def kp2gaussian(kp, spatial_size, kp_variance):
     """
     Transform a keypoint into gaussian like representation
     """
-    mean = kp['value']
+    mean = kp['value'] #(b,n,2)
 
-    coordinate_grid = make_coordinate_grid(spatial_size, mean.type())
-    number_of_leading_dimensions = len(mean.shape) - 1
-    shape = (1,) * number_of_leading_dimensions + coordinate_grid.shape
-    coordinate_grid = coordinate_grid.view(*shape)
-    repeats = mean.shape[:number_of_leading_dimensions] + (1, 1, 1)
-    coordinate_grid = coordinate_grid.repeat(*repeats)
+    coordinate_grid = make_coordinate_grid(spatial_size, mean.type()) #(h,w,2)
+    number_of_leading_dimensions = len(mean.shape) - 1#(2)
+    shape = (1,) * number_of_leading_dimensions + coordinate_grid.shape #(1,1)+(h,w,2)=(1,1,h,w,2)
+    coordinate_grid = coordinate_grid.view(*shape)#(1,1,h,w,2)
+    repeats = mean.shape[:number_of_leading_dimensions] + (1, 1, 1)  #(b,n,1,1,1)
+    coordinate_grid = coordinate_grid.repeat(*repeats) #(b,n,h,w,2)
 
     # Preprocess kp shape
-    shape = mean.shape[:number_of_leading_dimensions] + (1, 1, 2)
-    mean = mean.view(*shape)
+    shape = mean.shape[:number_of_leading_dimensions] + (1, 1, 2)#(b,n,1,1,2)
+    mean = mean.view(*shape)#(b,n,1,1,2)
 
-    mean_sub = (coordinate_grid - mean)
+    mean_sub = (coordinate_grid - mean)#(b,n,h,w,2)
 
-    out = torch.exp(-0.5 * (mean_sub ** 2).sum(-1) / kp_variance)
+    out = torch.exp(-0.5 * (mean_sub ** 2).sum(-1) / kp_variance) #(b,n,h,w)
 
     return out
 
@@ -44,7 +44,7 @@ def make_coordinate_grid(spatial_size, type):
     yy = y.view(-1, 1).repeat(1, w)
     xx = x.view(1, -1).repeat(h, 1)
 
-    meshed = torch.cat([xx.unsqueeze_(2), yy.unsqueeze_(2)], 2)
+    meshed = torch.cat([xx.unsqueeze_(2), yy.unsqueeze_(2)], 2)  #(h,w,2)
 
     return meshed
 
@@ -240,6 +240,7 @@ class AntiAliasInterpolation2d(nn.Module):
 
         out = F.pad(input, (self.ka, self.kb, self.ka, self.kb))
         out = F.conv2d(out, weight=self.weight, groups=self.groups)
+        # out = F.interpolate(out, scale_factor=(self.scale, self.scale))
         out = out[:, :, ::self.int_inv_scale, ::self.int_inv_scale]
 
         return out
