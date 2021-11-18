@@ -16,7 +16,9 @@ from modules.generator import OcclusionAwareGenerator
 from modules.keypoint_detector import KPDetector
 from animate import normalize_kp
 from scipy.spatial import ConvexHull
-
+import moviepy.editor as mp
+import subprocess
+import platform
 
 if sys.version_info[0] < 3:
     raise Exception("You must use Python 3 or higher. Recommended version is Python 3.7")
@@ -24,7 +26,7 @@ if sys.version_info[0] < 3:
 def load_checkpoints(config_path, checkpoint_path, cpu=False):
 
     with open(config_path) as f:
-        config = yaml.load(f)
+        config = yaml.load(f,Loader=yaml.FullLoader)
 
     generator = OcclusionAwareGenerator(**config['model_params']['generator_params'],
                                         **config['model_params']['common_params'])
@@ -153,5 +155,11 @@ if __name__ == "__main__":
         predictions = predictions_backward[::-1] + predictions_forward[1:]
     else:
         predictions = make_animation(source_image, driving_video, generator, kp_detector, relative=opt.relative, adapt_movement_scale=opt.adapt_scale, cpu=opt.cpu)
-    imageio.mimsave(opt.result_video, [img_as_ubyte(frame) for frame in predictions], fps=fps)
-
+    # imageio.mimsave(opt.result_video, [img_as_ubyte(frame) for frame in predictions], fps=fps)
+    imageio.mimsave("temp.mp4", [(frame*255).astype(np.uint8) for frame in predictions], fps=fps)
+    clip=mp.VideoFileClip(opt.driving_video)
+    clip.audio.write_audiofile("temp.wav")
+    command=f"ffmpeg -y -i temp.mp4 -i temp.wav -vf fps={fps} -crf 0 -vcodec h264 -preset veryslow '{opt.result_video}' "
+    subprocess.call(command,shell=platform.system()!="Windows")
+    os.remove("temp.mp4")
+    os.remove("temp.wav")
